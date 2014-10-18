@@ -1,0 +1,27 @@
+#!/usr/bin/env perl
+use Mojolicious::Lite;
+use Schema;
+
+helper db => sub {
+    return Schema->connect('dbi:SQLite:test.db');
+};
+
+get '/' => sub {
+    my $self = shift;
+
+
+    my $rs = $self->db->resultset('Project')->search(
+        { 'me.name' => 'project3' },
+        {
+            join      =>  { 'project_flags' => 'flag' },
+            select => ['me.name', 'flag.name'],
+            as     => ['project', 'flag']
+        }
+    );
+
+    $rs->result_class('DBIx::Class::ResultClass::HashRefInflator');
+
+    $self->render( json => [ $rs->all ] );
+};
+
+app->start;
